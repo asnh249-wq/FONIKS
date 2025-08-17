@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>شبیه‌ساز ارز دیجیتال - فونیکس</title>
+<style>
+  body { font-family: Tahoma, sans-serif; background: #f9f9f9; text-align:center; padding: 20px; }
+  h1 { color: #333; }
+  .box { background: #fff; padding: 20px; margin: 20px auto; border-radius: 10px; width: 300px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+  .buy { background-color: #4CAF50; color: white; }
+  .sell { background-color: #f44336; color: white; }
+  .top-btn { position: fixed; top: 20px; left: 20px; background: teal; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
+  .top-btn:hover { background: darkcyan; }
+</style>
+</head>
+<body>
+
+<h1>شبیه‌ساز ارز دیجیتال - فونیکس</h1>
+<p>کاربر: <span id="username"></span></p>
+
+<!-- دکمه پول روزانه -->
+<button class="top-btn" onclick="addDailyMoney()">پول می‌خوام</button>
+
+<div class="box">
+  <div class="crypto-name">فونیکس (Phoenix)</div>
+  <p>قیمت: <span id="pricePhoenix">10</span> تومان</p>
+  <button class="buy" onclick="buy()">خرید</button>
+  <button class="sell" onclick="sell()">فروش</button>
+  <p>مقدار شما: <span id="cryptoPhoenix">0</span> واحد</p>
+</div>
+
+<div class="box">
+  <p>پول شما: <span id="money">0</span> تومان</p>
+  <button onclick="window.open('https://rubika.ir/Gosettaki','_blank')">روبیکا من</button>
+</div>
+
+<script>
+// ---------- نام کاربری ----------
+let username = localStorage.getItem('username');
+if(!username){
+  username = prompt("لطفاً نام کاربری خود را وارد کنید:") || "کاربر ناشناس";
+  localStorage.setItem('username', username);
+}
+document.getElementById('username').innerText = username;
+
+// ---------- پول و ارز ----------
+let money = parseFloat(localStorage.getItem('money')) || 0;
+let crypto = parseInt(localStorage.getItem('cryptoPhoenix')) || 0;
+let pricePhoenix = parseFloat(localStorage.getItem('pricePhoenix')) || 10; // قیمت اولیه 10 تومان
+
+function updateDisplay(){
+  document.getElementById('money').innerText = money.toFixed(1);
+  document.getElementById('cryptoPhoenix').innerText = crypto;
+  document.getElementById('pricePhoenix').innerText = pricePhoenix.toFixed(1);
+
+  localStorage.setItem('money', money);
+  localStorage.setItem('cryptoPhoenix', crypto);
+  localStorage.setItem('pricePhoenix', pricePhoenix);
+}
+
+// ---------- تغییر قیمت اتوماتیک سریع ----------
+setInterval(()=>{
+  let change = (Math.random() * 10 - 5); // تغییر بین -5 و +5 تومان
+  pricePhoenix = Math.max(1, pricePhoenix + change);
+  updateDisplay();
+}, 1000); // هر ۱ ثانیه تغییر می‌کند
+
+// ---------- خرید و فروش ----------
+function buy(){
+  if(money >= pricePhoenix){
+    crypto += 1;
+    money -= pricePhoenix;
+    updateDisplay();
+  } else {
+    alert("پول کافی نیست!");
+  }
+}
+
+function sell(){
+  if(crypto >= 1){
+    crypto -= 1;
+    money += pricePhoenix;
+    updateDisplay();
+  } else {
+    alert("هیچ ارزی برای فروش ندارید!");
+  }
+}
+
+// ---------- دکمه پول روزانه ----------
+function addDailyMoney(){
+  const today = new Date().toDateString();
+  const lastClaim = localStorage.getItem('lastClaim') || "";
+
+  if(lastClaim === today){
+    alert("امروز قبلاً پول خود را دریافت کرده‌اید. دوباره فردا تلاش کنید!");
+  } else {
+    money += 10; // مقدار پول روزانه
+    localStorage.setItem('lastClaim', today);
+    updateDisplay();
+    alert("10 تومان روزانه به حساب شما اضافه شد!");
+  }
+}
+
+updateDisplay();
+</script>
+
+</body>
+</html>
