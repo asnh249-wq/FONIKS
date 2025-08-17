@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -33,9 +36,17 @@
 <div class="box">
   <div class="crypto-name">فونیکس (Phoenix)</div>
   <p>قیمت: <span id="pricePhoenix">10</span> تومان</p>
-  <button onclick="buy()">خرید</button>
-  <button onclick="sell()">فروش</button>
+  <button onclick="buy('phoenix')">خرید</button>
+  <button onclick="sell('phoenix')">فروش</button>
   <p>مقدار شما: <span id="cryptoPhoenix">0</span> واحد</p>
+</div>
+
+<div class="box">
+  <div class="crypto-name">نات کوین (NutCoin)</div>
+  <p>قیمت: <span id="priceNut">100</span> تومان</p>
+  <button onclick="buy('nut')">خرید</button>
+  <button onclick="sell('nut')">فروش</button>
+  <p>مقدار شما: <span id="cryptoNut">0</span> واحد</p>
 </div>
 
 <div class="box">
@@ -64,8 +75,14 @@ if(username){
 
 // ---------- پول و ارز ----------
 let money = parseFloat(localStorage.getItem('money')) || 0;
-let crypto = parseInt(localStorage.getItem('cryptoPhoenix')) || 0;
+
+// فونیکس
+let cryptoPhoenix = parseInt(localStorage.getItem('cryptoPhoenix')) || 0;
 let pricePhoenix = parseFloat(localStorage.getItem('pricePhoenix')) || 10;
+
+// نات کوین
+let cryptoNut = parseInt(localStorage.getItem('cryptoNut')) || 0;
+let priceNut = parseFloat(localStorage.getItem('priceNut')) || 100;
 
 // ---------- جایزه یک‌بار 100 تومنی برای سیکی ----------
 let sikyBonusClaimed = JSON.parse(localStorage.getItem('sikyBonusClaimed')) || false;
@@ -78,40 +95,68 @@ if(username === 'سیکی' && !sikyBonusClaimed){
 
 function updateDisplay(){
   document.getElementById('money').innerText = money.toFixed(1);
-  document.getElementById('cryptoPhoenix').innerText = crypto;
+  document.getElementById('cryptoPhoenix').innerText = cryptoPhoenix;
   document.getElementById('pricePhoenix').innerText = pricePhoenix.toFixed(1);
 
+  document.getElementById('cryptoNut').innerText = cryptoNut;
+  document.getElementById('priceNut').innerText = priceNut.toFixed(1);
+
   localStorage.setItem('money', money);
-  localStorage.setItem('cryptoPhoenix', crypto);
+  localStorage.setItem('cryptoPhoenix', cryptoPhoenix);
   localStorage.setItem('pricePhoenix', pricePhoenix);
+
+  localStorage.setItem('cryptoNut', cryptoNut);
+  localStorage.setItem('priceNut', priceNut);
 }
 
 // ---------- تغییر قیمت اتوماتیک ----------
 setInterval(()=>{
-  let change = (Math.random()*2-1);
-  pricePhoenix = Math.max(1, pricePhoenix + change);
+  let changePhoenix = (Math.random()*2-1);
+  pricePhoenix = Math.max(1, pricePhoenix + changePhoenix);
+
+  let changeNut = (Math.random()*5-2.5); // نوسان بیشتر برای نات کوین
+  priceNut = Math.max(1, priceNut + changeNut);
+
   updateDisplay();
 }, 3000);
 
 // ---------- خرید و فروش ----------
-function buy(){
-  if(money >= pricePhoenix){
-    crypto += 1;
-    money -= pricePhoenix;
-    updateDisplay();
-  } else {
-    alert("پول کافی نیست!");
+function buy(type){
+  if(type === 'phoenix'){
+    if(money >= pricePhoenix){
+      cryptoPhoenix += 1;
+      money -= pricePhoenix;
+    } else {
+      alert("پول کافی برای خرید فونیکس ندارید!");
+    }
+  } else if(type === 'nut'){
+    if(money >= priceNut){
+      cryptoNut += 1;
+      money -= priceNut;
+    } else {
+      alert("پول کافی برای خرید نات کوین ندارید!");
+    }
   }
+  updateDisplay();
 }
 
-function sell(){
-  if(crypto >= 1){
-    crypto -= 1;
-    money += pricePhoenix;
-    updateDisplay();
-  } else {
-    alert("هیچ ارزی برای فروش ندارید!");
+function sell(type){
+  if(type === 'phoenix'){
+    if(cryptoPhoenix >= 1){
+      cryptoPhoenix -= 1;
+      money += pricePhoenix;
+    } else {
+      alert("هیچ فونیکسی برای فروش ندارید!");
+    }
+  } else if(type === 'nut'){
+    if(cryptoNut >= 1){
+      cryptoNut -= 1;
+      money += priceNut;
+    } else {
+      alert("هیچ نات کوینی برای فروش ندارید!");
+    }
   }
+  updateDisplay();
 }
 
 // ---------- دکمه پول روزانه ----------
