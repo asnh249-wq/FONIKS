@@ -10,8 +10,10 @@
   button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
   .top-btn { position: fixed; top: 20px; left: 20px; background: teal; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
   .invite-btn { position: fixed; top: 70px; left: 20px; background: orange; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
+  .delete-btn { position: fixed; top: 120px; left: 20px; background: red; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
   .top-btn:hover { background: darkcyan; }
   .invite-btn:hover { background: darkorange; }
+  .delete-btn:hover { background: darkred; }
 </style>
 </head>
 <body>
@@ -19,8 +21,14 @@
 <h1>شبیه‌ساز ارز دیجیتال - فونیکس</h1>
 <p>کاربر: <span id="username"></span></p>
 
+<!-- دکمه پول -->
 <button class="top-btn" onclick="addDailyMoney()">پول می‌خوام</button>
+
+<!-- دکمه کد دعوت -->
 <button class="invite-btn" onclick="enterInviteCode()">کد دعوت</button>
+
+<!-- دکمه پاک کردن حساب -->
+<button class="delete-btn" onclick="deleteAccount()">پاک کردن حساب</button>
 
 <div class="box">
   <div class="crypto-name">فونیکس (Phoenix)</div>
@@ -35,17 +43,24 @@
 </div>
 
 <script>
-// ---------- نام کاربری ----------
+// ---------- ثبت نام و نام کاربری ----------
 let username = localStorage.getItem('username');
 
 if(username){
-  alert("نام کاربری وجود دارد: " + username);
+  document.getElementById('username').innerText = username;
 } else {
-  username = prompt("لطفاً نام کاربری خود را وارد کنید:") || "کاربر ناشناس";
-  localStorage.setItem('username', username);
-}
+  let newUsername = prompt("لطفاً نام کاربری خود را وارد کنید:") || "کاربر ناشناس";
 
-document.getElementById('username').innerText = username;
+  if(localStorage.getItem('username') === newUsername){
+    alert("این نام کاربری قبلاً وجود دارد!");
+    username = newUsername;
+  } else {
+    username = newUsername;
+    localStorage.setItem('username', username);
+  }
+
+  document.getElementById('username').innerText = username;
+}
 
 // ---------- پول و ارز ----------
 let money = parseFloat(localStorage.getItem('money')) || 0;
@@ -116,31 +131,42 @@ function addDailyMoney(){
 
 // ---------- کد دعوت یکبار مصرف ----------
 function enterInviteCode(){
-  const usedInvites = JSON.parse(localStorage.getItem('usedInvites')) || {};
-
+  const usedInvite1 = JSON.parse(localStorage.getItem('usedInvite1')) || false;
+  const usedInvite2 = JSON.parse(localStorage.getItem('usedInvite2')) || false;
   const code = prompt("لطفاً کد دعوت را وارد کنید:");
   if(!code) return;
 
-  const validCodes = {
-    "FONIKS100": 100, // کد قبلی
-    "FONGOL": 10      // کد جدید
-  };
-
-  if(validCodes[code]){
-    if(usedInvites[code]){
-      alert("این کد دعوت قبلاً استفاده شده است!");
-      return;
+  if(code === "FONIKS100"){
+    if(usedInvite1){
+      alert("کد FONIKS100 فقط یکبار قابل استفاده است!");
+    } else {
+      money += 100;
+      localStorage.setItem('money', money);
+      localStorage.setItem('usedInvite1', true);
+      updateDisplay();
+      alert("کد FONIKS100 درست! 100 تومان به حساب شما اضافه شد.");
     }
-    money += validCodes[code];
-    localStorage.setItem('money', money);
-
-    usedInvites[code] = true;
-    localStorage.setItem('usedInvites', JSON.stringify(usedInvites));
-
-    updateDisplay();
-    alert(`کد درست! ${validCodes[code]} تومان به حساب شما اضافه شد.`);
+  } else if(code === "FONGOL"){
+    if(usedInvite2){
+      alert("کد FONGOL فقط یکبار قابل استفاده است!");
+    } else {
+      money += 10;
+      localStorage.setItem('money', money);
+      localStorage.setItem('usedInvite2', true);
+      updateDisplay();
+      alert("کد FONGOL درست! 10 تومان به حساب شما اضافه شد.");
+    }
   } else {
     alert("کد اشتباه است!");
+  }
+}
+
+// ---------- پاک کردن حساب ----------
+function deleteAccount(){
+  if(confirm("آیا مطمئن هستید که می‌خواهید حساب خود را پاک کنید؟ همه چیز حذف خواهد شد.")){
+    localStorage.clear();
+    alert("حساب شما پاک شد!");
+    location.reload();
   }
 }
 
