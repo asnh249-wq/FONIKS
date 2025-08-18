@@ -6,19 +6,19 @@
 <style>
   body { font-family: Tahoma, sans-serif; background: #f9f9f9; text-align:center; padding: 20px; }
   h1 { color: #333; }
-  .box { background: #fff; padding: 20px; margin: 20px auto; border-radius: 10px; width: 300px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  .box { background: #fff; padding: 20px; margin: 20px auto; border-radius: 10px; width: 350px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
   button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
-  
+
+  /* دکمه‌های بالا */
   .top-btn { position: fixed; top: 20px; left: 20px; background: teal; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
   .invite-btn { position: fixed; top: 70px; left: 20px; background: orange; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
   .delete-btn { position: fixed; top: 120px; left: 20px; background: red; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
-  .admin-btn { position: fixed; top: 170px; left: 20px; background: purple; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
-  
+
   .top-btn:hover { background: darkcyan; }
   .invite-btn:hover { background: darkorange; }
   .delete-btn:hover { background: darkred; }
-  .admin-btn:hover { background: darkmagenta; }
 
+  /* پنل تاریخچه معاملات */
   #transactionList {
     position: fixed;
     top: 20px;
@@ -41,10 +41,10 @@
 <h1>شبیه‌ساز ارز دیجیتال - فونیکس</h1>
 <p>کاربر: <span id="username"></span></p>
 
+<!-- دکمه‌ها -->
 <button class="top-btn" onclick="addDailyMoney()">پول می‌خوام</button>
 <button class="invite-btn" onclick="enterInviteCode()">کد دعوت</button>
 <button class="delete-btn" onclick="deleteAccount()">پاک کردن حساب</button>
-<button class="admin-btn" onclick="adminPanel()">مدیریت</button>
 
 <div class="box">
   <div class="crypto-name">فونیکس (Phoenix)</div>
@@ -58,14 +58,25 @@
   <p>پول شما: <span id="money">0</span> تومان</p>
 </div>
 
+<div class="box">
+  <h3>نمودار قیمت فونیکس</h3>
+  <canvas id="priceChart"></canvas>
+</div>
+
+<!-- پنل تاریخچه معاملات -->
 <div id="transactionList">
   <h3>تاریخچه معاملات</h3>
   <ul id="transactions"></ul>
 </div>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-// ---------- ثبت نام و نام کاربری ----------
+// ---------- کاربران ----------
 let existingUsers = JSON.parse(localStorage.getItem('existingUsers')) || [];
+
+// ---------- ثبت نام و نام کاربری ----------
 let username = localStorage.getItem('username');
 
 if(username){
@@ -75,7 +86,7 @@ if(username){
   do {
     newUsername = prompt("لطفاً نام کاربری خود را وارد کنید:") || "کاربر ناشناس";
     if(existingUsers.includes(newUsername)) alert("این نام کاربری قبلاً استفاده شده است! نام دیگری انتخاب کنید.");
-  } while(existingUsers.includes(newUsername));
+  } while(existingUsers.includes(newUsername) || newUsername==="");
 
   username = newUsername;
   existingUsers.push(username);
@@ -117,12 +128,48 @@ function updateDisplay(){
   localStorage.setItem('pricePhoenix', pricePhoenix);
 }
 
-// ---------- تغییر قیمت سریع ----------
+// ---------- نمودار قیمت ----------
+const ctx = document.getElementById('priceChart').getContext('2d');
+const priceChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: [], // زمان
+    datasets: [{
+      label: 'قیمت فونیکس (تومان)',
+      data: [],
+      borderColor: 'teal',
+      borderWidth: 2,
+      tension: 0.3
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { title: { display: true, text: 'زمان' } },
+      y: { title: { display: true, text: 'قیمت' } }
+    }
+  }
+});
+function updateChart(price) {
+  const now = new Date().toLocaleTimeString();
+  priceChart.data.labels.push(now);
+  priceChart.data.datasets[0].data.push(price);
+
+  if(priceChart.data.labels.length > 20){ 
+    priceChart.data.labels.shift(); 
+    priceChart.data.datasets[0].data.shift(); 
+  }
+
+  priceChart.update();
+}
+
+// ---------- تغییر قیمت ----------
 setInterval(()=>{
-  let changePhoenix = (Math.random()*4-2); // نوسان سریع‌تر
+  let changePhoenix = (Math.random()*5-2.5); 
   pricePhoenix = Math.max(1, pricePhoenix + changePhoenix);
   updateDisplay();
-}, 1000); // هر 1 ثانیه
+  updateChart(pricePhoenix);
+}, 3500);
 
 // ---------- خرید و فروش ----------
 function buy(){
@@ -179,26 +226,6 @@ function deleteAccount(){
     alert("حساب شما پاک شد!");
     location.reload();
   }
-}
-
-// ---------- پنل مدیریت ----------
-function adminPanel(){
-  const password = prompt("رمز مدیریت را وارد کنید:");
-  if(password !== "10ADMINO"){ alert("رمز اشتباه است!"); return; }
-
-  const targetUser = prompt("نام کاربری موردنظر برای ویرایش پول را وارد کنید:");
-  if(!targetUser) return;
-
-  const amount = parseFloat(prompt("مقدار پولی که می‌خواید اضافه کنید:"));
-  if(isNaN(amount)){ alert("مقدار نامعتبر!"); return; }
-
-  const key = targetUser === username ? "money" : `money_${targetUser}`;
-  let current = parseFloat(localStorage.getItem(key)) || 0;
-  current += amount;
-  localStorage.setItem(key, current);
-
-  alert(`به کاربر ${targetUser}، ${amount} تومان اضافه شد!`);
-  if(targetUser === username) { money = current; updateDisplay(); }
 }
 
 updateDisplay();
