@@ -14,6 +14,23 @@
   .top-btn:hover { background: darkcyan; }
   .invite-btn:hover { background: darkorange; }
   .delete-btn:hover { background: darkred; }
+
+  /* پنل تاریخچه معاملات */
+  #transactionList {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 250px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 10px;
+    text-align: right;
+  }
+  #transactionList h3 { margin-top: 0; }
+  #transactions li { margin-bottom: 5px; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -42,6 +59,12 @@
   <p>پول شما: <span id="money">0</span> تومان</p>
 </div>
 
+<!-- پنل تاریخچه معاملات -->
+<div id="transactionList">
+  <h3>تاریخچه معاملات</h3>
+  <ul id="transactions"></ul>
+</div>
+
 <script>
 // ---------- ثبت نام و نام کاربری ----------
 let username = localStorage.getItem('username');
@@ -51,14 +74,8 @@ if(username){
 } else {
   let newUsername = prompt("لطفاً نام کاربری خود را وارد کنید:") || "کاربر ناشناس";
 
-  if(localStorage.getItem('username') === newUsername){
-    alert("این نام کاربری قبلاً وجود دارد!");
-    username = newUsername;
-  } else {
-    username = newUsername;
-    localStorage.setItem('username', username);
-  }
-
+  username = newUsername;
+  localStorage.setItem('username', username);
   document.getElementById('username').innerText = username;
 }
 
@@ -69,6 +86,27 @@ let money = parseFloat(localStorage.getItem('money')) || 0;
 let cryptoPhoenix = parseInt(localStorage.getItem('cryptoPhoenix')) || 0;
 let pricePhoenix = parseFloat(localStorage.getItem('pricePhoenix')) || 10;
 
+// ---------- تاریخچه معاملات ----------
+let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+function addTransaction(type, amount, price){
+  const entry = `${new Date().toLocaleTimeString()} - ${type} ${amount} واحد به قیمت ${price.toFixed(1)}`;
+  transactions.push(entry);
+  localStorage.setItem('transactions', JSON.stringify(transactions));
+  updateTransactionDisplay();
+}
+
+function updateTransactionDisplay(){
+  const ul = document.getElementById('transactions');
+  ul.innerHTML = '';
+  transactions.slice(-10).forEach(t => { // فقط 10 آخرین نمایش داده شود
+    const li = document.createElement('li');
+    li.innerText = t;
+    ul.appendChild(li);
+  });
+}
+
+// ---------- نمایش و ذخیره ----------
 function updateDisplay(){
   document.getElementById('money').innerText = money.toFixed(1);
   document.getElementById('cryptoPhoenix').innerText = cryptoPhoenix;
@@ -83,7 +121,6 @@ function updateDisplay(){
 setInterval(()=>{
   let changePhoenix = (Math.random()*2-1);
   pricePhoenix = Math.max(1, pricePhoenix + changePhoenix);
-
   updateDisplay();
 }, 3000);
 
@@ -92,6 +129,7 @@ function buy(){
   if(money >= pricePhoenix){
     cryptoPhoenix += 1;
     money -= pricePhoenix;
+    addTransaction('خرید', 1, pricePhoenix);
   } else {
     alert("پول کافی برای خرید فونیکس ندارید!");
   }
@@ -102,6 +140,7 @@ function sell(){
   if(cryptoPhoenix >= 1){
     cryptoPhoenix -= 1;
     money += pricePhoenix;
+    addTransaction('فروش', 1, pricePhoenix);
   } else {
     alert("هیچ فونیکسی برای فروش ندارید!");
   }
@@ -123,7 +162,7 @@ function addDailyMoney(){
   }
 }
 
-// ---------- کد دعوت یکبار مصرف ----------
+// ---------- کد دعوت ----------
 function enterInviteCode(){
   const usedInvite1 = JSON.parse(localStorage.getItem('usedInvite1')) || false;
   const usedInvite2 = JSON.parse(localStorage.getItem('usedInvite2')) || false;
@@ -158,14 +197,22 @@ function enterInviteCode(){
 // ---------- پاک کردن حساب ----------
 function deleteAccount(){
   if(confirm("آیا مطمئن هستید که می‌خواهید حساب خود را پاک کنید؟ همه چیز حذف خواهد شد.")){
-    localStorage.clear();
+    localStorage.removeItem('username');
+    localStorage.removeItem('money');
+    localStorage.removeItem('cryptoPhoenix');
+    localStorage.removeItem('pricePhoenix');
+    localStorage.removeItem('lastClaim');
+    localStorage.removeItem('usedInvite1');
+    localStorage.removeItem('usedInvite2');
+    localStorage.removeItem('transactions');
     alert("حساب شما پاک شد!");
     location.reload();
   }
 }
 
 updateDisplay();
+updateTransactionDisplay();
 </script>
 
 </body>
-  </html>
+    </html>
