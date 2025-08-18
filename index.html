@@ -9,7 +9,6 @@
   .box { background: #fff; padding: 20px; margin: 20px auto; border-radius: 10px; width: 300px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
   button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
   
-  /* دکمه‌های بالا */
   .top-btn { position: fixed; top: 20px; left: 20px; background: teal; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
   .invite-btn { position: fixed; top: 70px; left: 20px; background: orange; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
   .delete-btn { position: fixed; top: 120px; left: 20px; background: red; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
@@ -20,7 +19,6 @@
   .delete-btn:hover { background: darkred; }
   .admin-btn:hover { background: darkmagenta; }
 
-  /* پنل تاریخچه معاملات */
   #transactionList {
     position: fixed;
     top: 20px;
@@ -43,7 +41,6 @@
 <h1>شبیه‌ساز ارز دیجیتال - فونیکس</h1>
 <p>کاربر: <span id="username"></span></p>
 
-<!-- دکمه‌ها -->
 <button class="top-btn" onclick="addDailyMoney()">پول می‌خوام</button>
 <button class="invite-btn" onclick="enterInviteCode()">کد دعوت</button>
 <button class="delete-btn" onclick="deleteAccount()">پاک کردن حساب</button>
@@ -51,7 +48,7 @@
 
 <div class="box">
   <div class="crypto-name">فونیکس (Phoenix)</div>
-  <p>قیمت: <span id="pricePhoenix">10</span> تومان</p>
+  <p>قیمت: <span id="pricePhoenix">70</span> تومان</p>
   <button onclick="buy()">خرید</button>
   <button onclick="sell()">فروش</button>
   <p>مقدار شما: <span id="cryptoPhoenix">0</span> واحد</p>
@@ -61,7 +58,6 @@
   <p>پول شما: <span id="money">0</span> تومان</p>
 </div>
 
-<!-- پنل تاریخچه معاملات -->
 <div id="transactionList">
   <h3>تاریخچه معاملات</h3>
   <ul id="transactions"></ul>
@@ -69,12 +65,21 @@
 
 <script>
 // ---------- ثبت نام و نام کاربری ----------
+let existingUsers = JSON.parse(localStorage.getItem('existingUsers')) || [];
 let username = localStorage.getItem('username');
+
 if(username){
   document.getElementById('username').innerText = username;
 } else {
-  let newUsername = prompt("لطفاً نام کاربری خود را وارد کنید:") || "کاربر ناشناس";
+  let newUsername = "";
+  do {
+    newUsername = prompt("لطفاً نام کاربری خود را وارد کنید:") || "کاربر ناشناس";
+    if(existingUsers.includes(newUsername)) alert("این نام کاربری قبلاً استفاده شده است! نام دیگری انتخاب کنید.");
+  } while(existingUsers.includes(newUsername));
+
   username = newUsername;
+  existingUsers.push(username);
+  localStorage.setItem('existingUsers', JSON.stringify(existingUsers));
   localStorage.setItem('username', username);
   document.getElementById('username').innerText = username;
 }
@@ -82,7 +87,7 @@ if(username){
 // ---------- پول و ارز ----------
 let money = parseFloat(localStorage.getItem('money')) || 0;
 let cryptoPhoenix = parseInt(localStorage.getItem('cryptoPhoenix')) || 0;
-let pricePhoenix = parseFloat(localStorage.getItem('pricePhoenix')) || 10;
+let pricePhoenix = parseFloat(localStorage.getItem('pricePhoenix')) || 70;
 
 // ---------- تاریخچه معاملات ----------
 let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
@@ -112,12 +117,12 @@ function updateDisplay(){
   localStorage.setItem('pricePhoenix', pricePhoenix);
 }
 
-// ---------- تغییر قیمت ----------
+// ---------- تغییر قیمت سریع ----------
 setInterval(()=>{
-  let changePhoenix = (Math.random()*2-1);
+  let changePhoenix = (Math.random()*4-2); // نوسان سریع‌تر
   pricePhoenix = Math.max(1, pricePhoenix + changePhoenix);
   updateDisplay();
-}, 3000);
+}, 1000); // هر 1 ثانیه
 
 // ---------- خرید و فروش ----------
 function buy(){
@@ -187,7 +192,6 @@ function adminPanel(){
   const amount = parseFloat(prompt("مقدار پولی که می‌خواید اضافه کنید:"));
   if(isNaN(amount)){ alert("مقدار نامعتبر!"); return; }
 
-  // اضافه کردن پول به کاربر
   const key = targetUser === username ? "money" : `money_${targetUser}`;
   let current = parseFloat(localStorage.getItem(key)) || 0;
   current += amount;
