@@ -2,14 +2,15 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>شبیه‌ساز ارز دیجیتال - فونیکس</title>
+<title>شبیه‌ساز ارز دیجیتال - فونیکس با انیمیشن</title>
 <style>
   body { font-family: Tahoma, sans-serif; background: #f9f9f9; text-align:center; padding: 20px; }
   h1 { color: #333; }
   .box { background: #fff; padding: 20px; margin: 20px auto; border-radius: 10px; width: 350px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-  button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+  button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; transition: transform 0.2s; }
 
-  /* دکمه‌های بالا */
+  button:active { transform: scale(1.2); }
+
   .top-btn { position: fixed; top: 20px; left: 20px; background: teal; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
   .invite-btn { position: fixed; top: 70px; left: 20px; background: orange; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
   .delete-btn { position: fixed; top: 120px; left: 20px; background: red; color: white; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
@@ -18,7 +19,6 @@
   .invite-btn:hover { background: darkorange; }
   .delete-btn:hover { background: darkred; }
 
-  /* پنل تاریخچه معاملات */
   #transactionList {
     position: fixed;
     top: 20px;
@@ -34,6 +34,16 @@
   }
   #transactionList h3 { margin-top: 0; }
   #transactions li { margin-bottom: 5px; font-size: 14px; }
+
+  /* انیمیشن پول */
+  .money-animate {
+    animation: pulse 0.5s ease;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); color: teal; }
+    50% { transform: scale(1.5); color: green; }
+    100% { transform: scale(1); color: teal; }
+  }
 </style>
 </head>
 <body>
@@ -41,7 +51,6 @@
 <h1>شبیه‌ساز ارز دیجیتال - فونیکس</h1>
 <p>کاربر: <span id="username"></span></p>
 
-<!-- دکمه‌ها -->
 <button class="top-btn" onclick="addDailyMoney()">پول می‌خوام</button>
 <button class="invite-btn" onclick="enterInviteCode()">کد دعوت</button>
 <button class="delete-btn" onclick="deleteAccount()">پاک کردن حساب</button>
@@ -63,20 +72,15 @@
   <canvas id="priceChart"></canvas>
 </div>
 
-<!-- پنل تاریخچه معاملات -->
 <div id="transactionList">
   <h3>تاریخچه معاملات</h3>
   <ul id="transactions"></ul>
 </div>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-// ---------- کاربران ----------
 let existingUsers = JSON.parse(localStorage.getItem('existingUsers')) || [];
-
-// ---------- ثبت نام و نام کاربری ----------
 let username = localStorage.getItem('username');
 
 if(username){
@@ -95,19 +99,18 @@ if(username){
   document.getElementById('username').innerText = username;
 }
 
-// ---------- پول و ارز ----------
 let money = parseFloat(localStorage.getItem('money')) || 0;
 let cryptoPhoenix = parseInt(localStorage.getItem('cryptoPhoenix')) || 0;
 let pricePhoenix = parseFloat(localStorage.getItem('pricePhoenix')) || 70;
-
-// ---------- تاریخچه معاملات ----------
 let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
 function addTransaction(type, amount, price){
   const entry = `${new Date().toLocaleTimeString()} - ${type} ${amount} واحد به قیمت ${price.toFixed(1)}`;
   transactions.push(entry);
   localStorage.setItem('transactions', JSON.stringify(transactions));
   updateTransactionDisplay();
 }
+
 function updateTransactionDisplay(){
   const ul = document.getElementById('transactions');
   ul.innerHTML = '';
@@ -118,7 +121,13 @@ function updateTransactionDisplay(){
   });
 }
 
-// ---------- نمایش و ذخیره ----------
+function animateMoney(){
+  const moneyElem = document.getElementById('money');
+  moneyElem.classList.remove('money-animate');
+  void moneyElem.offsetWidth; // restart animation
+  moneyElem.classList.add('money-animate');
+}
+
 function updateDisplay(){
   document.getElementById('money').innerText = money.toFixed(1);
   document.getElementById('cryptoPhoenix').innerText = cryptoPhoenix;
@@ -128,42 +137,33 @@ function updateDisplay(){
   localStorage.setItem('pricePhoenix', pricePhoenix);
 }
 
-// ---------- نمودار قیمت ----------
 const ctx = document.getElementById('priceChart').getContext('2d');
 const priceChart = new Chart(ctx, {
   type: 'line',
   data: {
-    labels: [], // زمان
+    labels: [],
     datasets: [{
       label: 'قیمت فونیکس (تومان)',
       data: [],
       borderColor: 'teal',
       borderWidth: 2,
-      tension: 0.3
+      tension: 0.4
     }]
   },
-  options: {
-    responsive: true,
-    scales: {
-      x: { title: { display: true, text: 'زمان' } },
-      y: { title: { display: true, text: 'قیمت' } }
-    }
-  }
+  options: { responsive:true, scales:{ x:{title:{display:true,text:'زمان'}}, y:{title:{display:true,text:'قیمت'}} } }
 });
+
 function updateChart(price) {
   const now = new Date().toLocaleTimeString();
   priceChart.data.labels.push(now);
   priceChart.data.datasets[0].data.push(price);
-
   if(priceChart.data.labels.length > 20){ 
     priceChart.data.labels.shift(); 
     priceChart.data.datasets[0].data.shift(); 
   }
-
   priceChart.update();
 }
 
-// ---------- تغییر قیمت ----------
 setInterval(()=>{
   let changePhoenix = (Math.random()*5-2.5); 
   pricePhoenix = Math.max(1, pricePhoenix + changePhoenix);
@@ -171,25 +171,26 @@ setInterval(()=>{
   updateChart(pricePhoenix);
 }, 3500);
 
-// ---------- خرید و فروش ----------
 function buy(){
   if(money >= pricePhoenix){
     cryptoPhoenix += 1;
     money -= pricePhoenix;
+    animateMoney();
     addTransaction('خرید', 1, pricePhoenix);
   } else alert("پول کافی برای خرید فونیکس ندارید!");
   updateDisplay();
 }
+
 function sell(){
   if(cryptoPhoenix >= 1){
     cryptoPhoenix -= 1;
     money += pricePhoenix;
+    animateMoney();
     addTransaction('فروش', 1, pricePhoenix);
   } else alert("هیچ فونیکسی برای فروش ندارید!");
   updateDisplay();
 }
 
-// ---------- پول روزانه ----------
 function addDailyMoney(){
   const today = new Date().toDateString();
   const lastClaim = localStorage.getItem('lastClaim') || "";
@@ -198,12 +199,12 @@ function addDailyMoney(){
   } else {
     money += 10;
     localStorage.setItem('lastClaim', today);
+    animateMoney();
     updateDisplay();
     alert("10 تومان روزانه به حساب شما اضافه شد!");
   }
 }
 
-// ---------- کد دعوت ----------
 function enterInviteCode(){
   const usedInvite1 = JSON.parse(localStorage.getItem('usedInvite1')) || false;
   const usedInvite2 = JSON.parse(localStorage.getItem('usedInvite2')) || false;
@@ -212,14 +213,13 @@ function enterInviteCode(){
 
   if(code === "FONIKS100"){
     if(usedInvite1) alert("کد FONIKS100 فقط یکبار قابل استفاده است!");
-    else { money += 100; localStorage.setItem('money', money); localStorage.setItem('usedInvite1', true); updateDisplay(); alert("100 تومان اضافه شد."); }
+    else { money += 100; localStorage.setItem('money', money); localStorage.setItem('usedInvite1', true); animateMoney(); updateDisplay(); alert("100 تومان اضافه شد."); }
   } else if(code === "FONGOL"){
     if(usedInvite2) alert("کد FONGOL فقط یکبار قابل استفاده است!");
-    else { money += 10; localStorage.setItem('money', money); localStorage.setItem('usedInvite2', true); updateDisplay(); alert("10 تومان اضافه شد."); }
+    else { money += 10; localStorage.setItem('money', money); localStorage.setItem('usedInvite2', true); animateMoney(); updateDisplay(); alert("10 تومان اضافه شد."); }
   } else alert("کد اشتباه است!");
 }
 
-// ---------- پاک کردن حساب ----------
 function deleteAccount(){
   if(confirm("آیا مطمئن هستید؟")){
     localStorage.clear();
@@ -233,4 +233,4 @@ updateTransactionDisplay();
 </script>
 
 </body>
-</html>
+  </html>
